@@ -65,7 +65,7 @@ verifier:
   resultPath: .kaizen/verifier/verify-result.json
   timeoutMinutes: 15
   expectedRepository: https://github.com/kaizen-agents-org/verifier.git
-  expectedRef: refs/heads/main
+  expectedRef: refs/tags/v0.1.1
   freshnessTimeoutSeconds: 30
 guardian:
   enabled: true
