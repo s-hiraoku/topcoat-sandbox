@@ -1,0 +1,41 @@
+{
+  "schemaVersion": 1,
+  "verdict": "open_pr",
+  "final_verdict": "mergeable",
+  "status": "open_pr",
+  "evidence_grade": "executed",
+  "confidence": 82,
+  "risk": "low",
+  "summary": "Open PR with 0 should_fix item(s); risk is low.",
+  "notes": "evidence_grade=executed\nrisk=low\nconfidence=82",
+  "reason": "",
+  "must_fix": [],
+  "should_fix": [],
+  "run": {
+    "id": "kaizen-20260810221422-6131",
+    "started_at": "2026-08-10T22:14:22.580Z",
+    "completed_at": "2026-08-10T22:14:22.589Z",
+    "duration_ms": 9,
+    "workspace": "/Users/hiraoku.shinichi/.kaizen-sandbox/home/workspaces/s-hiraoku-topcoat-sandbox-worktrees/2026-08-10T22-11-01Z/issue-9",
+    "base_ref": "unknown",
+    "head_ref": "unknown",
+    "artifacts_dir": "/Users/hiraoku.shinichi/.kaizen-sandbox/home/workspaces/s-hiraoku-topcoat-sandbox-worktrees/2026-08-10T22-11-01Z/issue-9/.kaizen/verifier/.verifier-artifacts-1NILWD",
+    "changed_files": [
+      "README.md"
+    ],
+    "verify_commands": [
+      {
+        "command": "cargo test",
+        "exit_code": 0,
+        "signal": null,
+        "duration_ms": 0
+      },
+      {
+        "command": "cargo clippy",
+        "exit_code": 0,
+        "signal": null,
+        "duration_ms": 0
+      }
+    ]
+  }
+}

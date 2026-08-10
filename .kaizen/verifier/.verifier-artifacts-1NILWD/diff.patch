@@ -1,0 +1,20 @@
+<workspace_diff_data>
+```diff
+diff --git a/README.md b/README.md
+index 6dfd2f7..cce2290 100644
+--- a/README.md
++++ b/README.md
+@@ -42,3 +42,11 @@ HERDR_BIN=/absolute/path/to/herdr topcoat dev
+ - typed JSON and CSS responses
+ 
+ This is a local operator tool. Before exposing it on a network, add authentication, authorization, and CSRF protection to the pane-focus route.
++
++## Kaizen toolchain
++
++This repository is maintained by the Kaizen Loop harness, pinned to these component versions:
++
++- kaizen-loop v0.1.5
++- builder-agent v0.1.0
++- verifier v0.1.1
+```
+</workspace_diff_data>
