@@ -299,14 +299,25 @@ jobs:
           echo "" >> "$GITHUB_STEP_SUMMARY"
           # Surface the current backlog so an empty run is distinguishable from
           # a run that was correctly stopped by the backlog limit.
-          gh issue list \
+          #
+          # Three outcomes, and they must not be conflated: a query that fails
+          # is not the same as a repository with no scout issues, and reporting
+          # the former as the latter would hide a broken summary step behind a
+          # reassuring message.
+          if issues=$(gh issue list \
             --repo "${{ github.repository }}" \
             --state open \
             --search '"[scout]" in:title' \
             --json number,title,createdAt \
-            --jq '.[] | "- #\(.number) \(.title)"' \
-            >> "$GITHUB_STEP_SUMMARY" 2>/dev/null \
-            || echo "_No open scout issues._" >> "$GITHUB_STEP_SUMMARY"
+            --jq '.[] | "- #\(.number) \(.title)"' 2>/dev/null); then
+            if [ -n "$issues" ]; then
+              printf '%s\n' "$issues" >> "$GITHUB_STEP_SUMMARY"
+            else
+              echo "_No open scout issues._" >> "$GITHUB_STEP_SUMMARY"
+            fi
+          else
+            echo "_Could not list scout issues; the query failed._" >> "$GITHUB_STEP_SUMMARY"
+          fi
 
   scout-dry-run:
     name: scout (dry run)
