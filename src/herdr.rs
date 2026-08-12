@@ -213,6 +213,12 @@ mod tests {
         ExitStatus::from_raw(0)
     }
 
+    #[cfg(unix)]
+    fn failure(code: i32) -> ExitStatus {
+        use std::os::unix::process::ExitStatusExt;
+        ExitStatus::from_raw(code << 8)
+    }
+
     #[test]
     fn parses_and_summarizes_agents() {
         let output = Output {
@@ -254,9 +260,61 @@ mod tests {
     }
 
     #[test]
+    fn reports_stderr_when_agent_list_fails() {
+        let output = Output {
+            status: failure(1),
+            stdout: Vec::new(),
+            stderr: b"  herdr: unknown subcommand\n".to_vec(),
+        };
+
+        let error = parse_agent_list(&output).expect_err("non-zero exit is an error");
+        match error {
+            HerdrError::Command(message) => assert_eq!(message, "herdr: unknown subcommand"),
+            other => panic!("expected HerdrError::Command, got {other:?}"),
+        }
+    }
+
+    #[test]
+    fn reports_parse_failure_for_malformed_output() {
+        let output = Output {
+            status: success(),
+            stdout: b"not json at all".to_vec(),
+            stderr: Vec::new(),
+        };
+
+        let error = parse_agent_list(&output).expect_err("malformed JSON is an error");
+        assert!(
+            matches!(error, HerdrError::Json(_)),
+            "expected HerdrError::Json, got {error:?}"
+        );
+    }
+
+    #[test]
     fn validates_pane_ids_before_command_execution() {
         assert!(valid_pane_id("wM:p1"));
         assert!(!valid_pane_id("wM:p1;rm"));
         assert!(!valid_pane_id(""));
+    }
+
+    #[cfg(unix)]
+    #[tokio::test]
+    async fn reports_stderr_when_focus_fails() {
+        use std::os::unix::fs::PermissionsExt;
+
+        let script = std::env::temp_dir().join(format!("herdr-focus-fail-{}", std::process::id()));
+        std::fs::write(&script, "#!/bin/sh\necho '  pane not found  ' >&2\nexit 1\n")
+            .expect("write stub herdr");
+        std::fs::set_permissions(&script, std::fs::Permissions::from_mode(0o755))
+            .expect("make stub herdr executable");
+
+        let client = HerdrClient::new(script.to_string_lossy().into_owned());
+        let result = client.focus("wA:p1").await;
+        // Remove the stub before asserting so a failure cannot leak it into the temp dir.
+        std::fs::remove_file(&script).expect("clean up stub herdr");
+
+        match result.expect_err("non-zero exit is an error") {
+            HerdrError::Command(message) => assert_eq!(message, "pane not found"),
+            other => panic!("expected HerdrError::Command, got {other:?}"),
+        }
     }
 }
