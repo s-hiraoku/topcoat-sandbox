@@ -12,7 +12,7 @@ run:
   maxVerifyRetries: 2
   maxAttemptsPerIssue: 3
   maxOpenPullRequests: 1
-  latestStartHour: 7
+  latestStartHour: 23
 safety:
   operationMode: external
   minFreeDiskMb: 1024
