@@ -280,7 +280,7 @@ mod tests {
     }
 
     #[test]
-    fn unknown_status_is_deserialized_and_only_matches_all_status() {
+    fn unknown_status_is_deserialized_and_matches_only_supported_filters() {
         let status: AgentStatus = serde_json::from_str(r#""future""#).expect("unknown status");
 
         assert_eq!(status, AgentStatus::Unknown);
@@ -298,7 +298,28 @@ mod tests {
         };
 
         assert!(agent.matches("plugin", "all"));
-        assert!(!agent.matches("plugin", "unknown"));
+        assert!(!agent.matches("plugin", "idle"));
+
+        let idle_agent = Agent {
+            kind: "codex".into(),
+            status: AgentStatus::Idle,
+            cwd: "/repo/idle".into(),
+            focused: false,
+            pane_id: "wD:p2".into(),
+            revision: 1,
+            terminal_title_stripped: None,
+            workspace_id: "wD".into(),
+        };
+
+        assert_eq!(
+            AgentSummary::from_agents(&[agent, idle_agent]),
+            AgentSummary {
+                total: 2,
+                working: 0,
+                blocked: 0,
+                idle: 1,
+            }
+        );
     }
 
     #[test]
