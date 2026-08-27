@@ -298,7 +298,9 @@ mod tests {
         };
 
         assert!(agent.matches("plugin", "all"));
-        assert!(!agent.matches("plugin", "idle"));
+        for status in ["working", "blocked", "idle", "done"] {
+            assert!(!agent.matches("plugin", status), "status: {status}");
+        }
 
         let idle_agent = Agent {
             kind: "codex".into(),
