@@ -260,6 +260,125 @@ mod tests {
     }
 
     #[test]
+    fn matches_whitespace_case_insensitive_kind_cwd_and_failing_queries() {
+        let agent = Agent {
+            kind: "claude".into(),
+            status: AgentStatus::Idle,
+            cwd: "/repo/herdr-toolkit".into(),
+            focused: false,
+            pane_id: "wD:p1".into(),
+            revision: 2,
+            terminal_title_stripped: Some("Install plugin".into()),
+            workspace_id: "wD".into(),
+        };
+
+        assert!(agent.matches("   ", "all"));
+        assert!(agent.matches("INSTALL", "all"));
+        assert!(agent.matches("claude", "all"));
+        assert!(agent.matches("/repo", "all"));
+        assert!(!agent.matches("zzz", "all"));
+    }
+
+    #[test]
+    fn unknown_status_is_deserialized_and_matches_only_supported_filters() {
+        let status: AgentStatus = serde_json::from_str(r#""future""#).expect("unknown status");
+
+        assert_eq!(status, AgentStatus::Unknown);
+        assert_eq!(status.as_str(), "unknown");
+
+        let agent = Agent {
+            kind: "claude".into(),
+            status,
+            cwd: "/repo/herdr-toolkit".into(),
+            focused: false,
+            pane_id: "wD:p1".into(),
+            revision: 2,
+            terminal_title_stripped: Some("Install plugin".into()),
+            workspace_id: "wD".into(),
+        };
+
+        assert!(agent.matches("plugin", "all"));
+        for status in ["working", "blocked", "idle", "done"] {
+            assert!(!agent.matches("plugin", status), "status: {status}");
+        }
+
+        let idle_agent = Agent {
+            kind: "codex".into(),
+            status: AgentStatus::Idle,
+            cwd: "/repo/idle".into(),
+            focused: false,
+            pane_id: "wD:p2".into(),
+            revision: 1,
+            terminal_title_stripped: None,
+            workspace_id: "wD".into(),
+        };
+
+        assert_eq!(
+            AgentSummary::from_agents(&[agent, idle_agent]),
+            AgentSummary {
+                total: 2,
+                working: 0,
+                blocked: 0,
+                idle: 1,
+            }
+        );
+    }
+
+    #[test]
+    fn summary_counts_idle_but_not_done() {
+        let agents = [
+            Agent {
+                kind: "claude".into(),
+                status: AgentStatus::Idle,
+                cwd: "/repo/idle".into(),
+                focused: false,
+                pane_id: "wD:p1".into(),
+                revision: 1,
+                terminal_title_stripped: None,
+                workspace_id: "wD".into(),
+            },
+            Agent {
+                kind: "codex".into(),
+                status: AgentStatus::Done,
+                cwd: "/repo/done".into(),
+                focused: false,
+                pane_id: "wD:p2".into(),
+                revision: 1,
+                terminal_title_stripped: None,
+                workspace_id: "wD".into(),
+            },
+        ];
+
+        assert_eq!(
+            AgentSummary::from_agents(&agents),
+            AgentSummary {
+                total: 2,
+                working: 0,
+                blocked: 0,
+                idle: 1,
+            }
+        );
+    }
+
+    #[test]
+    fn project_falls_back_to_workspace_for_root_and_empty_cwd() {
+        for cwd in ["/", ""] {
+            let agent = Agent {
+                kind: "claude".into(),
+                status: AgentStatus::Idle,
+                cwd: cwd.into(),
+                focused: false,
+                pane_id: "wD:p1".into(),
+                revision: 1,
+                terminal_title_stripped: None,
+                workspace_id: "wD".into(),
+            };
+
+            assert_eq!(agent.project(), "wD", "cwd: {cwd:?}");
+        }
+    }
+
+    #[test]
     fn reports_stderr_when_agent_list_fails() {
         let output = Output {
             status: failure(1),
